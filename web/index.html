@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Denkzirkus</title>
+<style>
+:root {
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+  --bg: #12171E; --card: #1B222C; --line: #2A3441; --txt: #E8EDF2; --muted: #93A0AF;
+  --acc: #3FB6A8; --good: #4CC38A; --bad: #E5674F; --warn: #E0A93B; --fun: #F08A5D;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#app { max-width: 560px; margin: 0 auto; padding: calc(var(--sat) + 8px) 14px calc(var(--sab) + 28px); }
+header { display: flex; align-items: center; gap: 8px; height: 48px; }
+header h1 { font-size: 20px; margin: 0; flex: 1; }
+#back { background: none; border: 0; color: var(--txt); font-size: 30px; line-height: 1; padding: 0 12px 4px 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; }
+.card h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.muted { color: var(--muted); } .small { font-size: 13px; } .good { color: var(--good); } .bad { color: var(--bad); }
+.big { font-size: 28px; font-weight: 700; } .center { text-align: center; }
+button, .chip { font: inherit; color: var(--txt); background: #26303D; border: 1px solid var(--line); border-radius: 11px; padding: 10px 12px; }
+button.primary { background: var(--acc); border-color: var(--acc); color: #06201D; font-weight: 700; }
+button.block { display: block; width: 100%; margin-top: 8px; }
+button.ghost { background: none; } button:disabled { opacity: .4; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip.on { background: var(--acc); border-color: var(--acc); color: #06201D; font-weight: 600; }
+.row { display: flex; gap: 8px; align-items: center; } .row > .grow { flex: 1; min-width: 0; }
+.games { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.games button { text-align: left; padding: 12px; }
+.games .ic { font-size: 30px; line-height: 1.1; display: block; } .games .lv { display: block; font-size: 12px; color: var(--muted); }
+input[type=text] { font: inherit; color: var(--txt); background: #0E1319; border: 1px solid var(--line); border-radius: 10px; padding: 10px; width: 100%; }
+label.f { display: block; margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
+ul { margin: 6px 0; padding-left: 20px; } li { margin: 5px 0; }
+
+#play { position: fixed; inset: 0; z-index: 10; background: var(--bg); display: flex; flex-direction: column;
+  padding: calc(var(--sat) + 6px) 14px calc(var(--sab) + 14px); touch-action: manipulation; }
+#play[hidden], #modal[hidden] { display: none; }
+#p-top { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+#p-close { background: none; border: 0; font-size: 28px; padding: 0 10px 4px 0; }
+#p-title { flex: 1; font-weight: 700; font-size: 18px; } #p-lvl { font-size: 13px; color: var(--muted); }
+#p-body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow-y: auto; }
+.emo { font-size: 56px; line-height: 1.1; text-align: center; }
+.prog { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.q { font-size: 19px; text-align: center; margin: 6px 0; } .q b { color: var(--fun); }
+.seq { font-size: 30px; font-weight: 700; text-align: center; letter-spacing: .02em; font-variant-numeric: tabular-nums; margin: 10px 0; line-height: 1.4; }
+.seq em { font-style: normal; color: var(--fun); }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.opts.three { grid-template-columns: 1fr 1fr 1fr; }
+.opts button { padding: 14px 6px; font-size: 19px; min-height: 58px; }
+button.ok { background: #1E3B2E; border-color: var(--good); } button.err { background: #4A2622; border-color: var(--bad); }
+.why { background: #0E1319; border-radius: 10px; padding: 8px 10px; margin-top: 12px; font-size: 15px; text-align: center; }
+.mx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 300px; margin: 8px auto; }
+.mx div { aspect-ratio: 1; background: #0E1319; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; letter-spacing: 1px; }
+.mx div.miss { border: 2px dashed var(--fun); color: var(--fun); font-size: 30px; }
+.fig { font-size: 22px; letter-spacing: 1px; }
+.clues { margin: 4px 0 10px; padding-left: 22px; } .clues li { margin: 5px 0; } .clues li.viol { color: var(--bad); }
+.slots { display: grid; gap: 6px; margin: 8px 0; }
+.slots button { padding: 4px 0; min-height: 64px; font-size: 30px; } .slots button small { display: block; font-size: 11px; color: var(--muted); }
+.pal { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 8px; }
+.pal button { font-size: 28px; padding: 6px 12px; min-width: 52px; } .pal button.sel { border-color: var(--acc); background: #1E3B38; } .pal button.used { opacity: .3; }
+.hist { margin: 6px 0; max-height: 40vh; overflow-y: auto; } .hist div { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 24px; }
+.hist div span { font-size: 14px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+.sd { display: grid; gap: 3px; max-width: 340px; margin: 8px auto; }
+.sd button { padding: 0; aspect-ratio: 1; font-size: 22px; font-weight: 400; border-radius: 6px; min-width: 0; }
+.sd button.giv { font-weight: 800; background: #0E1319; } .sd button.sel { border-color: var(--acc); background: #1E3B38; }
+.sd button.br { margin-right: 5px; } .sd button.bb { margin-bottom: 5px; }
+.stm { background: #0E1319; border-radius: 10px; padding: 10px 12px; margin: 8px 0; font-size: 17px; line-height: 1.6; }
+.sol { background: #0E1319; border-radius: 10px; padding: 8px 10px; margin-top: 10px; font-size: 15px; text-align: center; line-height: 1.7; }
+#modal { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+#modal > div { background: var(--card); width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; padding: 16px 16px calc(var(--sab) + 16px); }
+#modal h3 { margin: 0 0 6px; }
+.btns { display: flex; gap: 8px; margin-top: 12px; } .btns button { flex: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header><button id="back" aria-label="Zurück">‹</button><h1 id="title">Denkzirkus</h1></header>
+  <main id="view"></main>
+</div>
+<div id="play" hidden>
+  <div id="p-top"><button id="p-close" aria-label="Schließen">‹</button><span id="p-title"></span><span id="p-lvl"></span></div>
+  <div id="p-body"></div>
+</div>
+<div id="modal" hidden><div id="modal-in"></div></div>
+
+<script>
+'use strict';
+// =====================================================================
+// Denkzirkus: Logik-Training fuer Kinder und Erwachsene. Sieben Arten von
+// Raetseln, alle vom Handy erzeugt und vor dem Stellen nachgerechnet, damit
+// jedes genau eine Loesung hat. Spieler, Altersgruppen und Stufen wie im
+// Merkzirkus. Details in README.md.
+// Aufbau: Daten -> Raetsel-Erzeuger (rein) -> Bausteine -> Spiele
+//         -> Ansichten -> Selbsttest (dzTests, ?debug=1).
+// =====================================================================
+const $ = id => document.getElementById(id);
+const K = { db: 'denkzirkus.data.v1' };
+let saveOk = true;
+function load(k, fb) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } }
+const db = Object.assign({ schema: 1, profiles: [], cur: null }, load(K.db, {}));
+function save() { try { localStorage.setItem(K.db, JSON.stringify(db)); } catch (e) { saveOk = false; } }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+const AGES = { k1: { name: 'Kind 6–9', start: 1 }, k2: { name: 'Kind 10–13', start: 2 }, e: { name: 'Ab 14 und Erwachsene', start: 4 } };
+function prof() { return db.profiles.find(p => p.id === db.cur) || null; }
+function lvl(p, g) { return p.levels[g] || AGES[p.age].start; }
+function isKid(p) { return p.age !== 'e'; }
+function levelStep(l, ok) { return clamp(l + (ok ? 1 : -1), 1, 10); }
+function shuffle(a, rnd) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)), t = b[i]; b[i] = b[j]; b[j] = t; } return b; }
+function sample(a, n, rnd) { return shuffle(a, rnd).slice(0, n); }
+function range(n) { const a = []; for (let i = 0; i < n; i++) a.push(i); return a; }
+
+// ================================================================ Raetsel-Erzeuger (rein)
+// ---- 1. Zahlenreihen: {terms, answer, opts, rule}
+function makeReihe(l, rnd) {
+  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const gen = (n, f) => { const a = []; for (let i = 0; i < n; i++) a.push(f(i, a)); return a; };
+  let t, rule;
+  if (l <= 2) { const k = l === 1 ? ri(1, 5) : ri(2, 10), s = ri(1, l === 1 ? 10 : 30); t = gen(6, i => s + k * i); rule = 'immer +' + k; }
+  else if (l === 3) { const k = ri(2, 9), s = ri(60, 99); t = gen(6, i => s - k * i); rule = 'immer −' + k; }
+  else if (l === 4) { const k = ri(2, 3), s = ri(1, 4); t = gen(6, i => s * Math.pow(k, i)); rule = 'immer ×' + k; }
+  else if (l === 5) { const a = ri(1, 5), b = ri(6, 10), s = ri(1, 20); t = gen(6, (i, x) => i ? x[i - 1] + (i % 2 ? a : b) : s); rule = 'abwechselnd +' + a + ' und +' + b; }
+  else if (l === 6) { const s = ri(1, 10), d = ri(1, 3); t = gen(6, (i, x) => i ? x[i - 1] + d + i - 1 : s); rule = 'der Abstand wächst jedes Mal um 1 (+' + d + ', +' + (d + 1) + ', +' + (d + 2) + ' …)'; }
+  else if (l === 7) {
+    if (rnd() < 0.5) { const a = ri(1, 5), b = ri(1, 5); t = gen(6, (i, x) => i === 0 ? a : i === 1 ? b : x[i - 1] + x[i - 2]); rule = 'jede Zahl ist die Summe der beiden davor'; }
+    else { const s = ri(1, 4); t = gen(6, i => (s + i) * (s + i)); rule = 'Quadratzahlen (' + s + '·' + s + ', ' + (s + 1) + '·' + (s + 1) + ' …)'; }
+  }
+  else if (l === 8) { const c = ri(1, 2), s = ri(3, 6); t = gen(6, (i, x) => i ? (i % 2 ? x[i - 1] * 2 : x[i - 1] - c) : s); rule = 'abwechselnd ×2 und −' + c; }
+  else if (l === 9) { const s1 = ri(1, 9), k1 = ri(2, 5), s2 = ri(20, 40), k2 = ri(2, 6); t = gen(7, i => i % 2 === 0 ? s1 + k1 * (i / 2) : s2 - k2 * ((i - 1) / 2)); rule = 'zwei Reihen im Wechsel: eine immer +' + k1 + ', die andere immer −' + k2; }
+  else { const k = ri(2, 3), c = ri(1, 4), s = ri(1, 3); t = gen(6, (i, x) => i ? x[i - 1] * k + c : s); rule = 'immer ×' + k + ' und dann +' + c; }
+  const answer = t[t.length - 1], set = [answer]; let guard = 0;
+  while (set.length < 4 && guard++ < 200) { const d = ri(1, answer > 60 ? 12 : 5) * (rnd() < 0.5 ? -1 : 1), c = answer + d; if (set.indexOf(c) < 0) set.push(c); }
+  return { terms: t.slice(0, -1), answer, opts: shuffle(set, rnd), rule };
+}
+// ---- 2. Muster (3x3): jede Zelle {s: Form, c: Farbe, n: Anzahl}. modes je Eigenschaft:
+// 'const' ueberall gleich, 'row' je Zeile gleich, 'col' je Spalte gleich, 'latin' jede Zeile und Spalte alle drei.
+const MUSTER_MODES = [null, ['col', 'const', 'const'], ['latin', 'const', 'const'], ['latin', 'row', 'const'], ['latin', 'col', 'const'], ['latin', 'latin', 'const'],
+  ['latin', 'latin', 'const'], ['latin', 'row', 'col'], ['latin', 'latin', 'col'], ['latin', 'latin', 'latin'], ['latin', 'latin', 'latin']];
+function makeMuster(l, rnd) {
+  const modes = MUSTER_MODES[l], keys = ['s', 'c', 'n'], fns = modes.map((m, i) => {
+    const perm = shuffle([0, 1, 2], rnd), a = 1 + (l >= 6 ? Math.floor(rnd() * 2) : 0), b = Math.floor(rnd() * 3);
+    return m === 'const' ? () => perm[0] : m === 'row' ? r => perm[r] : m === 'col' ? (r, c) => perm[c] : (r, c) => perm[(r * a + c + b) % 3];
+  });
+  const cells = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { const o = {}; keys.forEach((k, i) => { o[k] = fns[i](r, c); }); cells.push(o); }
+  const miss = l >= 6 ? Math.floor(rnd() * 9) : 8, right = cells[miss], same = (x, y) => x.s === y.s && x.c === y.c && x.n === y.n;
+  const opts = [right], want = l >= 5 ? 6 : 4; let guard = 0;
+  while (opts.length < want && guard++ < 300) {
+    const o = { s: right.s, c: right.c, n: right.n }, k = keys[Math.floor(rnd() * 3)]; o[k] = (o[k] + 1 + Math.floor(rnd() * 2)) % 3;
+    if (rnd() < 0.3) { const k2 = keys[Math.floor(rnd() * 3)]; o[k2] = (o[k2] + 1) % 3; }
+    if (!opts.some(x => same(x, o))) opts.push(o);
+  }
+  return { cells, miss, modes, opts: shuffle(opts, rnd), right };
+}
+// Passt die Zelle x an die Stelle miss? (fuer den Selbsttest: genau eine Auswahl darf passen)
+function musterFits(M, x) {
+  const r0 = Math.floor(M.miss / 3), c0 = M.miss % 3, at = (r, c) => r === r0 && c === c0 ? x : M.cells[r * 3 + c];
+  return ['s', 'c', 'n'].every((k, i) => {
+    const m = M.modes[i], row = [0, 1, 2].map(c => at(r0, c)[k]), col = [0, 1, 2].map(r => at(r, c0)[k]), other = (r0 + 1) % 3;
+    if (m === 'const') return x[k] === at(other, c0)[k];
+    if (m === 'row') return row[0] === row[1] && row[1] === row[2];
+    if (m === 'col') return col[0] === col[1] && col[1] === col[2];
+    return new Set(row).size === 3 && new Set(col).size === 3;
+  });
+}
+// ---- 3. Platz-Raetsel: n Tiere in einer Reihe, Hinweise mit genau einer Loesung.
+const TIERE = [['🐶', 'Der Hund', 'dem Hund'], ['🐱', 'Die Katze', 'der Katze'], ['🐭', 'Die Maus', 'der Maus'], ['🐸', 'Der Frosch', 'dem Frosch'],
+  ['🦊', 'Der Fuchs', 'dem Fuchs'], ['🐻', 'Der Bär', 'dem Bären'], ['🐰', 'Der Hase', 'dem Hasen'], ['🦉', 'Die Eule', 'der Eule']];
+const PLATZ_N = [0, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6];
+function platzTypes(l) { return ['pos', 'ld'].concat(l >= 3 ? ['neben', 'links'] : [], l >= 5 ? ['nichtpos', 'nichtneben'] : [], l >= 7 ? ['zwischen'] : []); }
+function platzMaxPos(l) { return l >= 8 ? 0 : l >= 5 ? 1 : 9; }
+function clueOk(c, p) {
+  const pos = x => p.indexOf(x), d = Math.abs(pos(c.a) - pos(c.b));
+  if (c.t === 'pos') return pos(c.a) === c.k; if (c.t === 'nichtpos') return pos(c.a) !== c.k;
+  if (c.t === 'ld') return pos(c.a) + 1 === pos(c.b); if (c.t === 'links') return pos(c.a) < pos(c.b);
+  if (c.t === 'neben') return d === 1; if (c.t === 'nichtneben') return d !== 1;
+  const x = pos(c.a), y = pos(c.b), z = pos(c.c); return (y < x && x < z) || (z < x && x < y);
+}
+function perms(n) { const out = [], go = (cur, rest) => { if (!rest.length) { out.push(cur); return; } rest.forEach((x, i) => go(cur.concat([x]), rest.slice(0, i).concat(rest.slice(i + 1)))); }; go([], range(n)); return out; }
+function solutions(n, clues) { return perms(n).filter(p => clues.every(c => clueOk(c, p))); }
+function makePlatz(l, rnd) {
+  const n = PLATZ_N[l], types = platzTypes(l), all = perms(n), animals = sample(TIERE, n, rnd);
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const sol = shuffle(range(n), rnd), pos = x => sol.indexOf(x); let cand = [];
+    for (let a = 0; a < n; a++) {
+      cand.push({ t: 'pos', a, k: pos(a) }); for (let k = 0; k < n; k++) if (k !== pos(a)) cand.push({ t: 'nichtpos', a, k });
+      for (let b = 0; b < n; b++) { if (a === b) continue; const d = Math.abs(pos(a) - pos(b));
+        if (pos(a) + 1 === pos(b)) cand.push({ t: 'ld', a, b }); if (pos(a) < pos(b)) cand.push({ t: 'links', a, b });
+        if (a < b) cand.push({ t: d === 1 ? 'neben' : 'nichtneben', a, b });
+        for (let c = b + 1; c < n; c++) { if (c === a) continue; const x = pos(a), y = pos(b), z = pos(c); if ((y < x && x < z) || (z < x && x < y)) cand.push({ t: 'zwischen', a, b, c }); } }
+    }
+    cand = shuffle(cand.filter(c => types.indexOf(c.t) >= 0), rnd); let nPos = 0; const maxPos = platzMaxPos(l);
+    cand = cand.filter(c => c.t !== 'pos' || nPos++ < maxPos);
+    let alive = all, chosen = [];
+    for (const c of cand) { const next = alive.filter(p => clueOk(c, p)); if (next.length < alive.length) { chosen.push(c); alive = next; } if (alive.length === 1) break; }
+    if (alive.length !== 1) continue;
+    for (let i = chosen.length - 1; i >= 0; i--) { const rest = chosen.slice(0, i).concat(chosen.slice(i + 1)); if (solutions(n, rest).length === 1) chosen = rest; }
+    return { n, animals, sol, clues: chosen };
+  }
+  const sol = range(n); return { n, animals, sol, clues: sol.map(a => ({ t: 'pos', a, k: a })) };      // Notausgang, praktisch nie erreicht
+}
+function clueText(c, an, n) {
+  const N = x => an[x][1], D = x => an[x][2], P = k => k === 0 ? 'ganz links' : k === n - 1 ? 'ganz rechts' : 'auf Platz ' + (k + 1);
+  return c.t === 'pos' ? N(c.a) + ' steht ' + P(c.k) + '.' : c.t === 'nichtpos' ? N(c.a) + ' steht nicht ' + P(c.k) + '.'
+    : c.t === 'ld' ? N(c.a) + ' steht direkt links von ' + D(c.b) + '.' : c.t === 'links' ? N(c.a) + ' steht irgendwo links von ' + D(c.b) + '.'
+    : c.t === 'neben' ? N(c.a) + ' steht direkt neben ' + D(c.b) + '.' : c.t === 'nichtneben' ? N(c.a) + ' steht nicht neben ' + D(c.b) + '.'
+    : N(c.a) + ' steht irgendwo zwischen ' + D(c.b) + ' und ' + D(c.c) + '.';
+}
+// ---- 4. Vergleichen: Kette von Vergleichen, daraus eine Frage.
+const KINDER = ['Mia', 'Ben', 'Lea', 'Tom', 'Ida', 'Max', 'Pia', 'Jan', 'Zoe', 'Emil'];
+const DIMS = [['größer', 'kleiner', 'am größten', 'am kleinsten'], ['älter', 'jünger', 'am ältesten', 'am jüngsten'], ['schneller', 'langsamer', 'am schnellsten', 'am langsamsten']];
+const VGL_N = [0, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6];
+function makeVergleich(l, rnd) {
+  const n = VGL_N[l], o = sample(KINDER, n, rnd), dim = DIMS[Math.floor(rnd() * DIMS.length)];
+  const stmts = shuffle(range(n - 1).map(i => rnd() < 0.5 ? o[i] + ' ist ' + dim[0] + ' als ' + o[i + 1] + '.' : o[i + 1] + ' ist ' + dim[1] + ' als ' + o[i] + '.'), rnd);
+  const kinds = l <= 3 ? ['top', 'bottom'] : l <= 6 ? ['top', 'bottom', 'pair'] : ['pair', 'count', 'bottom'], kind = kinds[Math.floor(rnd() * kinds.length)];
+  let frage, opts, answer;
+  if (kind === 'top') { frage = 'Wer ist ' + dim[2] + '?'; opts = shuffle(o, rnd); answer = o[0]; }
+  else if (kind === 'bottom') { frage = 'Wer ist ' + dim[3] + '?'; opts = shuffle(o, rnd); answer = o[n - 1]; }
+  else if (kind === 'pair') { const i = Math.floor(rnd() * (n - 2)), j = i + 2 + Math.floor(rnd() * (n - i - 2)); frage = 'Wer ist ' + dim[0] + ': ' + (rnd() < 0.5 ? o[i] + ' oder ' + o[j] : o[j] + ' oder ' + o[i]) + '?'; opts = shuffle([o[i], o[j]], rnd); answer = o[i]; }
+  else { const i = Math.floor(rnd() * n); frage = 'Wie viele sind ' + dim[0] + ' als ' + o[i] + '?'; opts = range(n).map(String); answer = String(i); }
+  return { stmts, frage, opts, answer, order: o, dim };
+}
+// ---- 5. Code knacken
+const FARBEN = ['🔴', '🟡', '🟢', '🔵', '🟣', '🟠', '⚪'];
+const CODE_P = [null, [3, 3, 8], [3, 4, 8], [3, 5, 8], [4, 4, 8], [4, 5, 8], [4, 6, 8], [4, 6, 7], [5, 6, 8], [5, 7, 8], [5, 7, 7]];   // Stellen, Farben, Versuche
+function makeCode(l, rnd) { const p = CODE_P[l]; return { pegs: p[0], colors: p[1], tries: p[2], code: l < 4 ? sample(range(p[1]), p[0], rnd) : range(p[0]).map(() => Math.floor(rnd() * p[1])) }; }
+// Rueckmeldung: wie viele stimmen ganz (Farbe und Platz), wie viele nur in der Farbe.
+function feedback(code, guess) {
+  let exact = 0; const a = {}, b = {};
+  code.forEach((c, i) => { if (guess[i] === c) exact++; else { a[c] = (a[c] || 0) + 1; b[guess[i]] = (b[guess[i]] || 0) + 1; } });
+  let color = 0; Object.keys(a).forEach(k => { color += Math.min(a[k], b[k] || 0); });
+  return { exact, color };
+}
+// ---- 6. Mini-Sudoku: 4x4 (Kaestchen 2x2) oder 6x6 (Kaestchen 2 hoch, 3 breit)
+const SD_GIVEN = [0, 10, 9, 8, 7, 6, 22, 20, 18, 16, 14];
+function sdDims(l) { return l <= 5 ? { n: 4, bh: 2, bw: 2 } : { n: 6, bh: 2, bw: 3 }; }
+function sdCan(g, d, i, v) {
+  const r = Math.floor(i / d.n), c = i % d.n, br = r - r % d.bh, bc = c - c % d.bw;
+  for (let k = 0; k < d.n; k++) if (g[r * d.n + k] === v || g[k * d.n + c] === v) return false;
+  for (let y = 0; y < d.bh; y++) for (let x = 0; x < d.bw; x++) if (g[(br + y) * d.n + bc + x] === v) return false;
+  return true;
+}
+// Zaehlt Loesungen bis hoechstens limit. order = Reihenfolge, in der Werte probiert werden.
+function sdCount(g, d, limit, order) {
+  const i = g.indexOf(0); if (i < 0) return 1; let cnt = 0;
+  for (const v of order || range(d.n).map(x => x + 1)) { if (!sdCan(g, d, i, v)) continue; g[i] = v; cnt += sdCount(g, d, limit - cnt, order); g[i] = 0; if (cnt >= limit) break; }
+  return cnt;
+}
+function sdSolve(g, d, rnd) { const i = g.indexOf(0); if (i < 0) return true; for (const v of shuffle(range(d.n).map(x => x + 1), rnd)) { if (!sdCan(g, d, i, v)) continue; g[i] = v; if (sdSolve(g, d, rnd)) return true; g[i] = 0; } return false; }
+function makeSudoku(l, rnd) {
+  const d = sdDims(l), sol = new Array(d.n * d.n).fill(0); sdSolve(sol, d, rnd);
+  const puz = sol.slice(); let givens = puz.length;
+  for (const i of shuffle(range(puz.length), rnd)) { if (givens <= SD_GIVEN[l]) break; const v = puz[i]; puz[i] = 0; if (sdCount(puz.slice(), d, 2) === 1) givens--; else puz[i] = v; }
+  return { d, sol, puz };
+}
+// ---- 7. Schlussfolgern: zwei Aussagen und eine Behauptung. valid = folgt sicher.
+// q: alle | kein | einige (Gruppen) oder ist | istnicht (x = eine Figur).
+const FORMEN = [
+  { min: 1, p: [['alle', 'A', 'B'], ['ist', 'x', 'A']], c: ['ist', 'x', 'B'], valid: true, why: 'Alle A sind B, und x ist ein A. Also ist x auch ein B.' },
+  { min: 1, p: [['alle', 'A', 'B'], ['ist', 'x', 'B']], c: ['ist', 'x', 'A'], valid: false, why: 'Alle A sind B, aber nicht jedes B muss ein A sein. x könnte ein anderes B sein.' },
+  { min: 1, p: [['kein', 'A', 'B'], ['ist', 'x', 'A']], c: ['istnicht', 'x', 'B'], valid: true, why: 'Kein A ist ein B, und x ist ein A. Also kann x kein B sein.' },
+  { min: 2, p: [['einige', 'A', 'B'], ['ist', 'x', 'A']], c: ['ist', 'x', 'B'], valid: false, why: 'Nur einige A sind B. Ob x dazugehört, weiß man nicht.' },
+  { min: 4, p: [['alle', 'A', 'B'], ['istnicht', 'x', 'B']], c: ['istnicht', 'x', 'A'], valid: true, why: 'Wäre x ein A, müsste x auch ein B sein. x ist aber kein B.' },
+  { min: 4, p: [['alle', 'A', 'B'], ['istnicht', 'x', 'A']], c: ['istnicht', 'x', 'B'], valid: false, why: 'x ist kein A, könnte aber trotzdem ein B sein: Es gibt vielleicht B, die keine A sind.' },
+  { min: 4, p: [['alle', 'A', 'B'], ['alle', 'B', 'C']], c: ['alle', 'A', 'C'], valid: true, why: 'Jedes A ist ein B, jedes B ist ein C. Also ist jedes A ein C.' },
+  { min: 5, p: [['alle', 'A', 'B'], ['alle', 'B', 'C']], c: ['alle', 'C', 'A'], valid: false, why: 'Umgekehrt gilt es nicht: Es kann C geben, die keine A sind.' },
+  { min: 7, p: [['alle', 'A', 'B'], ['kein', 'B', 'C']], c: ['kein', 'A', 'C'], valid: true, why: 'Jedes A ist ein B, und kein B ist ein C. Also ist auch kein A ein C.' },
+  { min: 7, p: [['alle', 'A', 'B'], ['einige', 'B', 'C']], c: ['einige', 'A', 'C'], valid: false, why: 'Die B, die C sind, müssen keine A sein.' },
+  { min: 8, p: [['einige', 'A', 'B'], ['alle', 'B', 'C']], c: ['einige', 'A', 'C'], valid: true, why: 'Die A, die B sind, sind damit auch C.' },
+  { min: 8, p: [['kein', 'A', 'B'], ['kein', 'B', 'C']], c: ['kein', 'A', 'C'], valid: false, why: 'Aus zwei „kein“ folgt nichts: A und C könnten sogar dasselbe sein.' }];
+const QUATSCH = [['Blubb', 'Blubbs'], ['Zapp', 'Zapps'], ['Mipp', 'Mipps'], ['Quork', 'Quorks'], ['Fnurp', 'Fnurps'], ['Glimm', 'Glimms'], ['Wumpel', 'Wumpel'], ['Zwirbel', 'Zwirbel'], ['Knurz', 'Knurze'], ['Flapp', 'Flapps']];
+const FIGUREN = ['Fips', 'Momo', 'Zotti', 'Kuno', 'Pips', 'Lulu'];
+function stmtText(s, w) {
+  const S = w[s[1]], P = w[s[2]];
+  return s[0] === 'alle' ? 'Alle ' + S[1] + ' sind ' + P[1] + '.' : s[0] === 'kein' ? 'Kein ' + S[0] + ' ist ein ' + P[0] + '.' : s[0] === 'einige' ? 'Einige ' + S[1] + ' sind ' + P[1] + '.'
+    : s[0] === 'ist' ? w.x + ' ist ein ' + P[0] + '.' : w.x + ' ist kein ' + P[0] + '.';
+}
+function makeSchluss(l, rnd) {
+  const f = sample(FORMEN.filter(x => x.min <= l), 1, rnd)[0], q = sample(QUATSCH, 3, rnd), w = { A: q[0], B: q[1], C: q[2], x: FIGUREN[Math.floor(rnd() * FIGUREN.length)] };
+  const sub = t => t.replace(/\bA\b/g, w.A[1]).replace(/\bB\b/g, w.B[1]).replace(/\bC\b/g, w.C[1]).replace(/\bx\b/g, w.x);
+  return { form: f, premises: f.p.map(s => stmtText(s, w)), concl: stmtText(f.c, w), valid: f.valid, why: sub(f.why) };
+}
+// Rechnet nach, ob eine Form wirklich zwingend ist: alle Welten mit 3 Dingen durchprobieren.
+function formValid(f) {
+  const ev = (s, m, x) => { const S = m[s[1]], P = m[s[2]];
+    return s[0] === 'alle' ? (S & ~P) === 0 : s[0] === 'kein' ? (S & P) === 0 : s[0] === 'einige' ? (S & P) !== 0 : s[0] === 'ist' ? (P >> x & 1) === 1 : (P >> x & 1) === 0; };
+  for (let A = 0; A < 8; A++) for (let B = 0; B < 8; B++) for (let C = 0; C < 8; C++) for (let x = 0; x < 3; x++) { const m = { A, B, C }; if (f.p.every(s => ev(s, m, x)) && !ev(f.c, m, x)) return false; }
+  return true;
+}
+
+// ================================================================ Bausteine des Ablaufs
+const G = { active: false, token: 0, game: null, level: 1 };
+const body = html => { $('p-body').innerHTML = html; };
+function later(ms, fn) { const tok = G.token; setTimeout(() => { if (G.active && tok === G.token) fn(); }, ms); }
+let actx = null;
+function beep(freq, dur) {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime; o.frequency.value = freq; g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur); } catch (e) {}
+}
+// Fragen mit Auswahl; nach jeder Antwort die Erklaerung, weiter per Knopf. done(Zahl der richtigen).
+function quiz(qs, done) {
+  let i = 0, right = 0;
+  const show = () => {
+    const q = qs[i];
+    body('<div class="prog">Aufgabe ' + (i + 1) + ' von ' + qs.length + '</div>' + q.html + '<div class="opts' + (q.opts.length === 6 || q.opts.length === 3 ? ' three' : '') + '">' + q.opts.map((o, k) => '<button data-k="' + k + '">' + o.html + '</button>').join('') + '</div><div id="q-after"></div>');
+    $('p-body').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+      if ($('q-next')) return;
+      const o = q.opts[+b.dataset.k]; if (o.ok) { right++; beep(660, 0.06); } else beep(200, 0.15);
+      $('p-body').querySelectorAll('[data-k]').forEach(x => { if (q.opts[+x.dataset.k].ok) x.classList.add('ok'); }); if (!o.ok) b.classList.add('err');
+      $('q-after').innerHTML = (q.why ? '<div class="why">' + q.why + '</div>' : '') + '<button class="primary block" id="q-next">' + (i < qs.length - 1 ? 'Weiter' : 'Auswertung') + '</button>';
+      $('q-next').onclick = () => { i++; if (i < qs.length) show(); else done(right); };
+    });
+  };
+  show();
+}
+function finishRound(ok, summary, solution) {
+  const p = prof(), g = G.game, old = G.level, neu = levelStep(old, ok);
+  p.levels[g] = neu; const st = p.stats[g] || (p.stats[g] = { n: 0, ok: 0, best: 0 });
+  st.n++; if (ok) { st.ok++; st.best = Math.max(st.best, old); p.stars += old; }
+  save(); G.token++; beep(ok ? 880 : 300, ok ? 0.25 : 0.3);
+  body('<div class="center"><div class="emo">' + (ok ? '🎉' : '🙃') + '</div><div class="big">' + (ok ? 'Geschafft!' : 'Knapp daneben') + '</div><div class="muted">' + summary + '</div>' +
+    '<div class="muted small" style="margin-top:6px">' + (neu > old ? 'Weiter mit Stufe ' + neu + ' · +' + old + ' ⭐' : neu < old ? 'Nächste Runde eine Stufe leichter (' + neu + ')' : ok ? 'Höchste Stufe gehalten · +' + old + ' ⭐' : 'Stufe ' + neu + ' bleibt') + '</div></div>' +
+    (solution ? '<div class="sol">' + solution + '</div>' : '') + '<button class="primary block" id="r-again">Noch eine Runde</button><button class="block" id="r-done">Fertig</button>');
+  $('r-again').onclick = () => startGame(g, true); $('r-done').onclick = () => history.back();
+}
+const FORM = ['●', '▲', '■'], FCOL = ['#E5674F', '#3FB6A8', '#E0A93B'];
+function fig(x) { return '<span class="fig" style="color:' + FCOL[x.c] + '">' + FORM[x.s].repeat(x.n + 1) + '</span>'; }
+
+// ================================================================ Spiele
+const GAMES = {
+  reihe: { name: 'Zahlenreihen', icon: '🔢', kurz: 'Wie geht die Reihe weiter?',
+    k: 'In jeder Zahlenreihe steckt eine geheime Regel. Finde sie heraus und wähle die Zahl, die als nächste kommt.',
+    e: 'Jede Reihe folgt einer Regel: feste Schritte, wachsende Schritte, Malnehmen, zwei verschachtelte Reihen. Schau zuerst auf die Abstände zwischen den Zahlen.',
+    run(l) {
+      const qs = range(5).map(() => { const R = makeReihe(l, Math.random); return { html: '<div class="seq">' + R.terms.join('  ') + '  <em>?</em></div>', opts: R.opts.map(o => ({ html: String(o), ok: o === R.answer })), why: 'Regel: ' + R.rule + '. Richtig ist ' + R.answer + '.' }; });
+      quiz(qs, right => finishRound(right >= 4, right + ' von 5 richtig', ''));
+    } },
+  muster: { name: 'Muster-Lücke', icon: '🧩', kurz: 'Welches Bild gehört in die Lücke?',
+    k: 'In dem Feld fehlt ein Bild. Schau dir Zeilen und Spalten an: Formen, Farben und Anzahl folgen einer Regel. Welches Bild passt?',
+    e: 'Wie in Matrizentests: Form, Farbe und Anzahl folgen je einer eigenen Regel über Zeilen und Spalten. Prüfe die Eigenschaften einzeln nacheinander, nicht alle auf einmal.',
+    run(l) {
+      const qs = range(4).map(() => { const M = makeMuster(l, Math.random);
+        return { html: '<div class="mx">' + M.cells.map((c, i) => i === M.miss ? '<div class="miss">?</div>' : '<div>' + fig(c) + '</div>').join('') + '</div>', opts: M.opts.map(o => ({ html: fig(o), ok: o === M.right })) }; });
+      quiz(qs, right => finishRound(right >= 3, right + ' von 4 richtig', ''));
+    } },
+  platz: { name: 'Wer steht wo?', icon: '🐾', kurz: 'Stell die Tiere nach den Hinweisen in die richtige Reihenfolge.',
+    k: 'Die Tiere stehen in einer Reihe, aber du weißt nicht wie. Lies die Hinweise und stell jedes Tier auf seinen Platz. Tippe erst ein Tier an, dann einen Platz.',
+    e: 'Ein Logikrätsel mit genau einer Lösung. Nutze zuerst die Hinweise, die am meisten festlegen, und schließe dann Plätze aus. Erst ein Tier antippen, dann den Platz.',
+    run(l) {
+      const R = makePlatz(l, Math.random), place = new Array(R.n).fill(-1); let sel = -1, fails = 0, viol = [];
+      const draw = () => {
+        body('<ol class="clues">' + R.clues.map((c, i) => '<li class="' + (viol.indexOf(i) >= 0 ? 'viol' : '') + '">' + clueText(c, R.animals, R.n) + '</li>').join('') + '</ol>' +
+          '<div class="slots" style="grid-template-columns:repeat(' + R.n + ',1fr)">' + place.map((a, i) => '<button data-s="' + i + '">' + (a >= 0 ? R.animals[a][0] : '·') + '<small>' + (i + 1) + '</small></button>').join('') + '</div>' +
+          '<div class="pal">' + R.animals.map((a, i) => '<button data-a="' + i + '" class="' + (sel === i ? 'sel' : '') + (place.indexOf(i) >= 0 ? ' used' : '') + '">' + a[0] + '</button>').join('') + '</div>' +
+          '<div class="prog" id="pl-msg" style="margin-top:8px">' + (viol.length ? 'Die roten Hinweise passen noch nicht.' : 'links ist Platz 1') + '</div>' +
+          '<button class="primary block" id="pl-check"' + (place.indexOf(-1) >= 0 ? ' disabled' : '') + '>Prüfen</button>');
+        $('p-body').querySelectorAll('[data-a]').forEach(b => b.onclick = () => { const a = +b.dataset.a, at = place.indexOf(a); if (at >= 0) place[at] = -1; sel = a; viol = []; draw(); });
+        $('p-body').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const s = +b.dataset.s; if (sel >= 0) { const at = place.indexOf(sel); if (at >= 0) place[at] = -1; place[s] = sel; sel = -1; } else place[s] = -1; viol = []; draw(); });
+        $('pl-check').onclick = () => {
+          viol = R.clues.map((c, i) => clueOk(c, place) ? -1 : i).filter(i => i >= 0);
+          const solStr = R.sol.map(a => R.animals[a][0]).join(' ');
+          if (!viol.length) { finishRound(fails <= 1, fails ? 'Gelöst nach ' + fails + ' Fehlversuch' + (fails > 1 ? 'en' : '') : 'Auf Anhieb gelöst', solStr); return; }
+          fails++; beep(200, 0.15); if (fails >= 3) finishRound(false, 'Drei Fehlversuche', 'Lösung: ' + solStr); else draw();
+        };
+      };
+      draw();
+    } },
+  vergleich: { name: 'Wer ist größer?', icon: '📏', kurz: 'Aus Vergleichen die Reihenfolge erschließen.',
+    k: 'Du bekommst ein paar Sätze, wer größer, älter oder schneller ist. Daraus kannst du die ganze Reihenfolge herausfinden. Tipp: Stell die Kinder im Kopf in eine Reihe.',
+    e: 'Transitives Schließen: Aus einzelnen Vergleichen die Gesamtordnung bilden. Die Sätze stehen durcheinander und wechseln die Richtung (größer und kleiner).',
+    run(l) {
+      const qs = range(4).map(() => { const R = makeVergleich(l, Math.random);
+        return { html: '<div class="stm">' + R.stmts.map(esc).join('<br>') + '</div><div class="q">' + esc(R.frage) + '</div>', opts: R.opts.map(o => ({ html: esc(o), ok: o === R.answer })), why: 'Reihenfolge (' + R.dim[2] + ' zuerst): ' + R.order.join(' › ') }; });
+      quiz(qs, right => finishRound(right >= 3, right + ' von 4 richtig', ''));
+    } },
+  code: { name: 'Code knacken', icon: '🔐', kurz: 'Finde den geheimen Farbcode mit möglichst wenigen Versuchen.',
+    k: 'Ich habe mir einen geheimen Farbcode ausgedacht. Rate! Nach jedem Versuch sage ich dir, wie viele Farben am richtigen Platz stehen und wie viele zwar vorkommen, aber woanders hingehören.',
+    e: 'Deduktion wie bei Mastermind: Jede Rückmeldung schließt Möglichkeiten aus. Ab Stufe 4 können Farben doppelt vorkommen. Wähle Versuche, die möglichst viel Neues verraten.',
+    run(l) {
+      const R = makeCode(l, Math.random), hist = []; let guess = [];
+      const pegs = a => a.map(c => FARBEN[c]).join('');
+      const draw = () => {
+        body('<div class="prog">' + R.pegs + ' Stellen · ' + R.colors + ' Farben' + (l >= 4 ? ' · doppelt möglich' : ' · jede Farbe höchstens einmal') + ' · Versuch ' + (hist.length + 1) + ' von ' + R.tries + '</div>' +
+          '<div class="hist">' + hist.map(h => '<div>' + pegs(h.g) + '<span>' + h.f.exact + ' richtig · ' + h.f.color + ' falscher Platz</span></div>').join('') + '</div>' +
+          '<div class="seq" id="cd-g">' + range(R.pegs).map(i => guess[i] !== undefined ? FARBEN[guess[i]] : '▫️').join(' ') + '</div>' +
+          '<div class="pal">' + range(R.colors).map(c => '<button data-c="' + c + '">' + FARBEN[c] + '</button>').join('') + '<button data-c="-1">⌫</button></div>' +
+          '<button class="primary block" id="cd-ok"' + (guess.length < R.pegs ? ' disabled' : '') + '>Prüfen</button>');
+        $('p-body').querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = +b.dataset.c; if (c < 0) guess.pop(); else if (guess.length < R.pegs) guess.push(c); draw(); });
+        $('cd-ok').onclick = () => {
+          const f = feedback(R.code, guess); hist.push({ g: guess, f }); guess = [];
+          if (f.exact === R.pegs) { finishRound(true, 'Geknackt im ' + hist.length + '. Versuch', pegs(R.code)); return; }
+          if (hist.length >= R.tries) { finishRound(false, 'Alle ' + R.tries + ' Versuche verbraucht', 'Der Code war ' + pegs(R.code)); return; }
+          beep(440, 0.06); draw(); const h = $('p-body').querySelector('.hist'); h.scrollTop = h.scrollHeight;
+        };
+      };
+      draw();
+    } },
+  sudoku: { name: 'Mini-Sudoku', icon: '🔳', kurz: 'In jeder Zeile, Spalte und jedem Kästchen kommt alles genau einmal vor.',
+    k: 'Füll das Feld aus. Die Regel: In jeder Zeile, in jeder Spalte und in jedem dicken Kästchen darf jedes Zeichen nur einmal vorkommen. Tippe erst ein leeres Feld an, dann ein Zeichen.',
+    e: 'Sudoku im Kleinformat: 4×4 bis Stufe 5, danach 6×6 mit Kästchen aus 2×3 Feldern. Jedes Rätsel hat genau eine Lösung und ist ohne Raten lösbar, wenn man die Möglichkeiten je Feld durchgeht.',
+    run(l) {
+      const R = makeSudoku(l, Math.random), d = R.d, g = R.puz.slice(), sym = isKid(prof()) && d.n === 4 ? ['', '🍎', '🍌', '🍇', '🍓'] : ['', 1, 2, 3, 4, 5, 6];
+      let sel = g.indexOf(0), wrong = [], fails = 0;
+      const draw = () => {
+        body('<div class="sd" style="grid-template-columns:repeat(' + d.n + ',1fr)">' + g.map((v, i) => { const r = Math.floor(i / d.n), c = i % d.n;
+          return '<button data-i="' + i + '" class="' + (R.puz[i] ? 'giv' : '') + (i === sel ? ' sel' : '') + (wrong.indexOf(i) >= 0 ? ' err' : '') + ((c + 1) % d.bw === 0 && c < d.n - 1 ? ' br' : '') + ((r + 1) % d.bh === 0 && r < d.n - 1 ? ' bb' : '') + '">' + sym[v] + '</button>'; }).join('') + '</div>' +
+          '<div class="pal">' + range(d.n).map(v => '<button data-v="' + (v + 1) + '">' + sym[v + 1] + '</button>').join('') + '<button data-v="0">⌫</button></div>' +
+          '<div class="prog" style="margin-top:8px">' + (wrong.length ? 'Die roten Felder stimmen nicht.' : 'Feld antippen, dann Zeichen wählen') + '</div><button class="ghost block small" id="sd-give">Aufgeben und Lösung zeigen</button>');
+        $('p-body').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const i = +b.dataset.i; if (!R.puz[i]) { sel = i; draw(); } });
+        $('p-body').querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+          if (sel < 0 || R.puz[sel]) return; g[sel] = +b.dataset.v; wrong = wrong.filter(x => x !== sel);
+          if (g.indexOf(0) < 0) {
+            wrong = g.map((v, i) => v !== R.sol[i] ? i : -1).filter(i => i >= 0);
+            if (!wrong.length) { finishRound(fails <= 1, fails ? 'Gelöst mit ' + fails + ' Fehlversuch' + (fails > 1 ? 'en' : '') : 'Fehlerfrei gelöst', ''); return; }
+            fails++; beep(200, 0.15);
+          } else { const nx = g.indexOf(0, sel + 1); sel = nx >= 0 ? nx : g.indexOf(0); }
+          draw();
+        });
+        $('sd-give').onclick = () => finishRound(false, 'Aufgegeben', 'Lösung:<br>' + range(d.n).map(r => R.sol.slice(r * d.n, r * d.n + d.n).map(v => sym[v]).join(' ')).join('<br>'));
+      };
+      draw();
+    } },
+  schluss: { name: 'Stimmt das sicher?', icon: '🤔', kurz: 'Folgt die Behauptung zwingend aus den zwei Sätzen?',
+    k: 'Hier geht es um Quatsch-Wesen wie Blubbs und Zapps. Du bekommst zwei Sätze, die stimmen. Dann kommt eine Behauptung. Stimmt sie dann ganz sicher, oder könnte es auch anders sein?',
+    e: 'Logisches Schließen mit sinnlosen Begriffen, damit Vorwissen nicht hilft. Gefragt ist, ob die Behauptung zwingend folgt, nicht ob sie möglich ist. Typische Falle: einen Satz einfach umdrehen.',
+    run(l) {
+      const qs = range(6).map(() => { const R = makeSchluss(l, Math.random);
+        return { html: '<div class="stm">' + R.premises.map(esc).join('<br>') + '</div><div class="q">Stimmt dann sicher:<br><b>' + esc(R.concl) + '</b></div>', opts: [{ html: 'Ja, sicher', ok: R.valid }, { html: 'Nein, nicht sicher', ok: !R.valid }], why: esc(R.why) }; });
+      quiz(qs, right => finishRound(right >= 5, right + ' von 6 richtig', ''));
+    } },
+};
+const ORDER = ['reihe', 'muster', 'platz', 'vergleich', 'code', 'sudoku', 'schluss'];
+function startGame(g, direkt) {
+  const p = prof(); if (!p) return;
+  G.active = true; G.token++; G.game = g; G.level = lvl(p, g);
+  $('p-title').textContent = GAMES[g].icon + ' ' + GAMES[g].name; $('p-lvl').textContent = 'Stufe ' + G.level; $('play').hidden = false;
+  if (location.hash !== '#play') location.hash = 'play';
+  const go = () => { G.token++; GAMES[g].run(G.level); };
+  if (direkt) { go(); return; }
+  body('<div class="card"><h2>So geht es</h2><div>' + (isKid(p) ? GAMES[g].k : GAMES[g].e) + '</div></div><button class="primary block" id="g-go">Los geht’s</button>');
+  $('g-go').onclick = go;
+}
+function closeGame() { G.active = false; G.token++; $('play').hidden = true; }
+$('p-close').onclick = () => history.back();
+
+// ================================================================ Ansichten
+const view = $('view'), VIEWS = {};
+function openModal(html, init) { $('modal-in').innerHTML = html; $('modal').hidden = false; init && init(); }
+function closeModal() { $('modal').hidden = true; }
+$('modal').onclick = e => { if (e.target === $('modal') && db.profiles.length) closeModal(); };
+function profileDialog(p) {
+  const neu = !p; let age = p ? p.age : 'k2';
+  const draw = name => openModal('<h3>' + (neu ? 'Neuer Spieler' : 'Spieler ändern') + '</h3><label class="f" style="margin-top:0">Name</label><input type="text" id="f-name" maxlength="16" value="' + esc(name) + '">' +
+    '<label class="f">Alter</label><div class="chips">' + Object.keys(AGES).map(a => '<button class="chip' + (a === age ? ' on' : '') + '" data-age="' + a + '">' + AGES[a].name + '</button>').join('') + '</div>' +
+    '<div class="muted small" style="margin-top:8px">Das Alter bestimmt, wie die Erklärungen klingen und auf welcher Stufe es losgeht. Danach passt sich die Stufe von selbst an.</div>' +
+    '<div id="f-msg" class="small bad"></div><div class="btns">' + (!neu && db.profiles.length > 1 ? '<button class="ghost bad" id="f-del">Löschen</button>' : '') + (db.profiles.length ? '<button class="ghost" id="f-x">Abbrechen</button>' : '') + '<button class="primary" id="f-ok">Speichern</button></div>', () => {
+    $('modal-in').querySelectorAll('[data-age]').forEach(b => b.onclick = () => { age = b.dataset.age; draw($('f-name').value); });
+    if ($('f-x')) $('f-x').onclick = closeModal;
+    if ($('f-del')) $('f-del').onclick = () => { db.profiles = db.profiles.filter(x => x !== p); db.cur = db.profiles[0].id; save(); closeModal(); render('home'); };
+    $('f-ok').onclick = () => {
+      const n = $('f-name').value.trim(); if (!n) { $('f-msg').textContent = 'Bitte einen Namen eingeben.'; return; }
+      if (neu) { const np = { id: 'p' + Date.now().toString(36), name: n, age, levels: {}, stats: {}, stars: 0 }; db.profiles.push(np); db.cur = np.id; } else { p.name = n; p.age = age; }
+      save(); closeModal(); render('home');
+    };
+  });
+  draw(p ? p.name : '');
+}
+VIEWS.home = () => {
+  const p = prof();
+  if (!p) { view.innerHTML = '<div class="card center"><div class="emo">🎪</div><div class="big">Willkommen im Denkzirkus</div><div class="muted">Leg zuerst einen Spieler an.</div><button class="primary block" id="h-new">Spieler anlegen</button></div>'; $('h-new').onclick = () => profileDialog(null); return; }
+  let h = '';
+  if (!saveOk) h += '<div class="card small bad">Der Spielstand ließ sich nicht speichern.</div>';
+  if (window.DZ_TEST) h += '<div class="card small" id="selftest">Selbsttest: ' + DZ_TEST.ok + ' OK, ' + DZ_TEST.fail + ' Fehler</div>';
+  h += '<div class="card"><div class="chips">' + db.profiles.map(x => '<button class="chip' + (x === p ? ' on' : '') + '" data-p="' + x.id + '">' + esc(x.name) + '</button>').join('') + '<button class="chip" id="h-add">+</button></div>' +
+    '<div class="row" style="margin-top:10px"><div class="grow"><div class="big">' + p.stars + ' ⭐</div><div class="muted small">' + AGES[p.age].name + '</div></div><button id="h-edit" class="ghost small">ändern</button></div></div>';
+  h += '<div class="card"><h2>Rätsel</h2><div class="games">' + ORDER.map(g => { const st = p.stats[g];
+    return '<button data-g="' + g + '"><span class="ic">' + GAMES[g].icon + '</span>' + GAMES[g].name + '<span class="lv">Stufe ' + lvl(p, g) + (st ? ' · ' + st.ok + ' von ' + st.n + ' geschafft' : '') + '</span></button>'; }).join('') + '</div></div>';
+  h += '<button class="block" id="h-info">Wie das Ganze funktioniert</button>';
+  view.innerHTML = h;
+  view.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { db.cur = b.dataset.p; save(); render('home'); });
+  view.querySelectorAll('[data-g]').forEach(b => b.onclick = () => startGame(b.dataset.g));
+  $('h-add').onclick = () => profileDialog(null); $('h-edit').onclick = () => profileDialog(p); $('h-info').onclick = () => { location.hash = 'info'; };
+};
+VIEWS.info = () => {
+  view.innerHTML = '<div class="card"><h2>Die Rätsel</h2><ul class="small">' + ORDER.map(g => '<li><b>' + GAMES[g].name + ':</b> ' + GAMES[g].kurz + '</li>').join('') + '</ul></div>' +
+    '<div class="card"><h2>Immer neu, immer lösbar</h2><div class="small">Kein Rätsel ist vorgefertigt. Das Handy erzeugt jedes neu und rechnet vor dem Stellen nach, dass es genau eine Lösung gibt. Raten ist nie nötig.</div></div>' +
+    '<div class="card"><h2>Stufen und Sterne</h2><div class="small">Jedes Rätsel hat zehn Stufen. Klappt eine Runde, geht es eine Stufe höher, sonst eine zurück. Für jede geschaffte Runde gibt es Sterne in Höhe der Stufe. Jeder Spieler hat eigene Stufen; das Alter legt nur den Einstieg fest.</div></div>' +
+    '<div class="card"><h2>Ehrlich eingeordnet</h2><div class="small">Rätseln macht in genau diesen Rätselarten besser und übt, geduldig Schritt für Schritt zu schließen. Dass man dadurch allgemein klüger wird, ist nicht belegt.</div></div>' +
+    '<div class="muted small">Denkzirkus v1.0</div>';
+};
+function render(name) {
+  if (!VIEWS[name]) name = 'home';
+  $('title').textContent = name === 'info' ? 'So funktioniert es' : 'Denkzirkus'; $('back').style.visibility = name === 'home' ? 'hidden' : 'visible';
+  VIEWS[name](); window.scrollTo(0, 0);
+}
+function route() {
+  const h = (location.hash || '#home').slice(1);
+  if (G.active && h !== 'play') closeGame();
+  if (h === 'play') { if (!G.active) { history.replaceState(null, '', '#home'); render('home'); } return; }
+  render(h);
+}
+$('back').onclick = () => history.back();
+window.addEventListener('hashchange', route);
+
+// ================================================================ Selbsttest
+function dzTests() {
+  let ok = 0, fail = 0;
+  const t = (name, cond, info) => { if (cond) { ok++; console.log('OK   ' + name); } else { fail++; console.error('FAIL ' + name + (info !== undefined ? ' -> ' + info : '')); } };
+  let sd = 5; const rnd = () => { sd = (sd * 1103515245 + 12345) & 0x7fffffff; return sd / 0x7fffffff; };
+  const uniq = a => new Set(a).size === a.length, all10 = f => { const bad = []; for (let l = 1; l <= 10; l++) for (let k = 0; k < 12; k++) { const r = f(l); if (r !== true) bad.push('Stufe ' + l + ': ' + r); } return bad; };
+  t('levelStep', levelStep(3, true) === 4 && levelStep(1, false) === 1 && levelStep(10, true) === 10);
+
+  let bad = all10(l => { const R = makeReihe(l, rnd); return R.opts.length === 4 && uniq(R.opts) && R.opts.indexOf(R.answer) >= 0 && R.terms.length >= 5 && R.terms.every(Number.isInteger) && Number.isInteger(R.answer) || JSON.stringify(R); });
+  t('Zahlenreihen: vier verschiedene Antworten, die richtige dabei', !bad.length, bad[0]);
+  const r1 = makeReihe(1, rnd), d1 = r1.terms[1] - r1.terms[0]; t('Zahlenreihe Stufe 1: feste Schritte', r1.terms.every((v, i) => !i || v - r1.terms[i - 1] === d1) && r1.answer === r1.terms[4] + d1);
+  const r4 = makeReihe(4, rnd), q4 = r4.terms[1] / r4.terms[0]; t('Zahlenreihe Stufe 4: fester Faktor', r4.terms.every((v, i) => !i || v / r4.terms[i - 1] === q4) && r4.answer === r4.terms[4] * q4);
+  const r6 = makeReihe(6, rnd), df = r6.terms.map((v, i) => i ? v - r6.terms[i - 1] : 0).slice(1); t('Zahlenreihe Stufe 6: Abstand wächst um 1', df.every((v, i) => !i || v === df[i - 1] + 1) && r6.answer === r6.terms[4] + df[3] + 1);
+
+  bad = all10(l => { const M = makeMuster(l, rnd), fits = M.opts.filter(o => musterFits(M, o)); const same = (x, y) => x.s === y.s && x.c === y.c && x.n === y.n;
+    return M.opts.length === (l >= 5 ? 6 : 4) && fits.length === 1 && fits[0] === M.right && M.opts.every((o, i) => M.opts.every((p, j) => i === j || !same(o, p))) || 'passend: ' + fits.length; });
+  t('Muster: genau eine Auswahl passt, und zwar die richtige', !bad.length, bad[0]);
+
+  bad = all10(l => { const R = makePlatz(l, rnd), s = solutions(R.n, R.clues), types = platzTypes(l);
+    return R.n === PLATZ_N[l] && s.length === 1 && s[0].join() === R.sol.join() && R.clues.every(c => types.indexOf(c.t) >= 0) && R.clues.filter(c => c.t === 'pos').length <= platzMaxPos(l) && uniq(R.animals) || 'Lösungen: ' + s.length; });
+  t('Wer steht wo?: genau eine Lösung, nur erlaubte Hinweisarten', !bad.length, bad[0]);
+  bad = all10(l => { const R = makePlatz(l, rnd); for (let i = 0; i < R.clues.length; i++) if (solutions(R.n, R.clues.slice(0, i).concat(R.clues.slice(i + 1))).length === 1) return 'überflüssiger Hinweis'; return true; });
+  t('Wer steht wo?: kein Hinweis ist überflüssig', !bad.length, bad[0]);
+  const an = TIERE.slice(0, 4);
+  t('Hinweistexte', clueText({ t: 'pos', a: 0, k: 0 }, an, 4) === 'Der Hund steht ganz links.' && clueText({ t: 'nichtpos', a: 1, k: 2 }, an, 4) === 'Die Katze steht nicht auf Platz 3.' &&
+    clueText({ t: 'ld', a: 2, b: 0 }, an, 4) === 'Die Maus steht direkt links von dem Hund.' && clueText({ t: 'zwischen', a: 3, b: 0, c: 1 }, an, 4) === 'Der Frosch steht irgendwo zwischen dem Hund und der Katze.');
+  t('clueOk', clueOk({ t: 'ld', a: 0, b: 1 }, [0, 1, 2]) && !clueOk({ t: 'ld', a: 1, b: 0 }, [0, 1, 2]) && clueOk({ t: 'zwischen', a: 1, b: 2, c: 0 }, [0, 1, 2]) && clueOk({ t: 'nichtneben', a: 0, b: 2 }, [0, 1, 2]) && perms(4).length === 24);
+
+  bad = all10(l => { const R = makeVergleich(l, rnd); let exp;
+    if (/^Wie viele/.test(R.frage)) { const who = R.frage.match(/als (\S+)\?/)[1]; exp = String(R.order.indexOf(who)); }
+    else if (R.frage.indexOf(R.dim[2]) >= 0) exp = R.order[0]; else if (R.frage.indexOf(R.dim[3]) >= 0) exp = R.order[R.order.length - 1];
+    else { const m = R.frage.match(/: (\S+) oder (\S+)\?/); exp = R.order.indexOf(m[1]) < R.order.indexOf(m[2]) ? m[1] : m[2]; }
+    return R.stmts.length === VGL_N[l] - 1 && R.answer === exp && R.opts.indexOf(R.answer) >= 0 && uniq(R.opts) || R.frage + ' -> ' + R.answer + ' statt ' + exp; });
+  t('Vergleichen: Antwort stimmt mit der Reihenfolge überein', !bad.length, bad[0]);
+
+  t('Code-Rückmeldung', JSON.stringify(feedback([0, 1, 2, 3], [0, 1, 2, 3])) === '{"exact":4,"color":0}' && JSON.stringify(feedback([0, 1, 2, 3], [1, 0, 3, 2])) === '{"exact":0,"color":4}' &&
+    JSON.stringify(feedback([0, 0, 1, 2], [0, 1, 0, 0])) === '{"exact":1,"color":2}' && JSON.stringify(feedback([0, 1, 2], [3, 3, 3])) === '{"exact":0,"color":0}');
+  bad = all10(l => { const R = makeCode(l, rnd); return R.code.length === CODE_P[l][0] && R.code.every(c => c >= 0 && c < CODE_P[l][1]) && (l >= 4 || uniq(R.code)) && R.colors <= FARBEN.length || R.code.join(); });
+  t('Code: Farben im erlaubten Bereich, bis Stufe 3 ohne Doppelte', !bad.length, bad[0]);
+
+  const sdOk = (g, d) => { for (let i = 0; i < g.length; i++) { const v = g[i]; g[i] = 0; const can = sdCan(g, d, i, v); g[i] = v; if (!can) return false; } return true; };
+  bad = []; for (let l = 1; l <= 10; l++) for (let k = 0; k < 3; k++) { const R = makeSudoku(l, rnd), giv = R.puz.filter(Boolean).length;
+    if (!(R.sol.indexOf(0) < 0 && sdOk(R.sol.slice(), R.d) && sdCount(R.puz.slice(), R.d, 2) === 1 && R.puz.every((v, i) => !v || v === R.sol[i]) && giv >= SD_GIVEN[l] && giv < R.sol.length)) bad.push('Stufe ' + l + ', vorgegeben ' + giv); }
+  t('Mini-Sudoku: gültige Lösung, genau eine, auf allen Stufen', !bad.length, bad[0]);
+  t('Mini-Sudoku: Größe nach Stufe', sdDims(5).n === 4 && sdDims(6).n === 6 && sdDims(6).bw === 3);
+
+  t('Schlussfolgern: jede Form ist richtig als zwingend oder nicht eingestuft', FORMEN.every(f => formValid(f) === f.valid), FORMEN.map((f, i) => formValid(f) === f.valid ? '' : i).join(''));
+  t('Schlussfolgern: auf jeder Stufe gibt es zwingende und nicht zwingende Formen', range(10).every(i => { const fs = FORMEN.filter(f => f.min <= i + 1); return fs.some(f => f.valid) && fs.some(f => !f.valid); }));
+  const S = makeSchluss(10, rnd); t('Schlussfolgern: Sätze ohne Platzhalter', S.premises.length === 2 && !/\b[ABCx]\b/.test(S.premises.join(' ') + S.concl + S.why), S.why);
+  t('Satzbau', stmtText(['alle', 'A', 'B'], { A: QUATSCH[0], B: QUATSCH[1], x: 'Fips' }) === 'Alle Blubbs sind Zapps.' && stmtText(['kein', 'A', 'B'], { A: QUATSCH[0], B: QUATSCH[1], x: 'Fips' }) === 'Kein Blubb ist ein Zapp.' && stmtText(['istnicht', 'x', 'B'], { A: QUATSCH[0], B: QUATSCH[1], x: 'Fips' }) === 'Fips ist kein Zapp.');
+  t('Jedes Spiel hat Texte für Kinder und Erwachsene', ORDER.every(g => GAMES[g].k && GAMES[g].e && GAMES[g].kurz && typeof GAMES[g].run === 'function') && ORDER.length === 7);
+  t('Alter bestimmt die Einstiegsstufe', lvl({ age: 'k1', levels: {} }, 'reihe') === 1 && lvl({ age: 'e', levels: {} }, 'reihe') === 4 && lvl({ age: 'e', levels: { reihe: 9 } }, 'reihe') === 9);
+  console.log('Selbsttest: ' + ok + ' OK, ' + fail + ' Fehler');
+  return { ok, fail };
+}
+window.dzTests = dzTests;
+if (/[?&]debug=1/.test(location.search)) window.DZ_TEST = dzTests();
+route();
+</script>
+</body>
+</html>
